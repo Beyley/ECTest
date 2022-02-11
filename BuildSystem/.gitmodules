@@ -1,0 +1,6 @@
+[submodule "libs/zigimg"]
+	path = libs/zigimg
+	url = https://github.com/zigimg/zigimg
+[submodule "libs/zig-clap"]
+	path = libs/zig-clap
+	url = https://github.com/Hejsil/zig-clap
