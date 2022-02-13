@@ -61,7 +61,23 @@ public class ShaderPair {
 		fixed(InstanceData* ptr = vec2arr)
 			gl.Uniform2(location, (uint)(vec2arr.Length * Renderer.VECTORS_PER_INSTANCE), (float*)ptr);
 	}
+	
+	public void SetUniform(GL gl, string name, ReadOnlySpan<int> intarr) {
+		if (!this.CachedUniformLocations.TryGetValue(name, out int location)) {
+			location = gl.GetUniformLocation(this.Program, name);
+			
+			this.CachedUniformLocations[name] = location;
+		}
 
+		gl.Uniform1(location, (uint)intarr.Length, intarr);
+	}
+
+	public unsafe void BindUniformToTexUnit(GL gl, string name, int unit) {
+		int location = gl.GetUniformLocation(this.Program, name);
+
+		gl.Uniform1(location, unit);
+	}
+	
 	public void Use(GL gl) {
 		gl.UseProgram(this.Program);
 	}
@@ -78,6 +94,6 @@ public class ShaderPair {
 		
 		gl.DeleteShader(shader);
 		throw new Exception($"Shader compilation failed!: {gl.GetShaderInfoLog(shader)}");
-
 	}
+	
 }

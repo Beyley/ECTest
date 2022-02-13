@@ -8,8 +8,9 @@ using Silk.NET.Windowing;
 
 namespace ECTest {
 	public class Program {
-		private static Texture      _Tex;
-		public static Matrix4x4    ProjectionMatrix;
+		private static Texture   _Tex;
+		private static Texture   _Tex2;
+		public static  Matrix4x4 ProjectionMatrix;
 
 		[Conditional("DEBUG")]
 		public static void CheckError(GL gl) {
@@ -32,8 +33,6 @@ namespace ECTest {
 				VSync = false,
 				// FramesPerSecond = 10000
 			});
-			
-			
 
 			window.Load += delegate {
 				gl = window.CreateOpenGLES();
@@ -48,7 +47,14 @@ namespace ECTest {
 				CheckError(gl);
 				Console.WriteLine($"Shaders compiled! vtx:{mainShaderPair.Vertex} frg:{mainShaderPair.Fragment} prg: {mainShaderPair.Program}");
 
+				mainShaderPair.Use(gl);
+				mainShaderPair.BindUniformToTexUnit(gl, "tex", 0);
+				mainShaderPair.BindUniformToTexUnit(gl, "tex2", 1);
+				mainShaderPair.BindUniformToTexUnit(gl, "tex3", 2);
+				mainShaderPair.BindUniformToTexUnit(gl, "tex4", 3);
+
 				_Tex = Texture.LoadQoi(gl, "images/test.qoi");
+				_Tex2 = Texture.LoadQoi(gl, "images/test2.qoi");
 				CheckError(gl);
 				
 				ProjectionMatrix = Matrix4x4.CreateOrthographicOffCenter(0, window.Size.X, 0, window.Size.Y, 1f, 0f);
@@ -81,7 +87,7 @@ namespace ECTest {
 					for (int y = 0; y <= 740; y += 80) {
 						Renderer.DrawTexture(
 							gl, 
-							_Tex, 
+							x % 160 != 0 ? _Tex : _Tex2, 
 							new(x, y), 
 							new(80f),
 							new(0f),

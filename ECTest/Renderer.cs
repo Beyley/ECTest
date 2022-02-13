@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Reflection.Metadata;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
 using Rectangle = System.Drawing.Rectangle;
@@ -105,10 +106,9 @@ public static class Renderer {
 
 	private static InstanceData _templateInstanceData;
 	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectAdd, Vector2 textureRectMult, Color color) {
-		if (_LastTex != null && tex != _LastTex || _Instances >= _InstanceData.Length) {
+		if (_Instances >= _InstanceData.Length || _UsedTextures == Texture.MAX_TEXTURE_UNITS) {
 			Flush(gl);
 		}
-		_LastTex = tex;
 
 		_templateInstanceData.Position        = postition;
 		_templateInstanceData.Size            = size;
@@ -117,20 +117,46 @@ public static class Renderer {
 		_templateInstanceData.TextureRectMult = textureRectMult;
 		
 		_InstanceData[_Instances] = _templateInstanceData;
+
+		int texId = GetTextureId(tex);
+		_InstanceTexIds[_Instances] = texId;
 		
 		_Instances++;
 	}
 
+	private static readonly Texture[] _BoundTextures = new Texture[Texture.MAX_TEXTURE_UNITS];
+	private static          int       _UsedTextures  = 0;
+	
+	private static int GetTextureId(Texture tex) {
+		if(_UsedTextures != 0)
+			for (int i = 0; i < _UsedTextures; i++) {
+				Texture tex2 = _BoundTextures[i];
+
+				if (tex == tex2) return i;
+			}
+
+		_BoundTextures[_UsedTextures] = tex;
+		_UsedTextures++;
+		
+		return _UsedTextures - 1;
+	}
+	
 	private static          uint           _Instances           = 0;
 	public const            short          VECTORS_PER_INSTANCE = 6;
 	private static readonly InstanceData[] _InstanceData        = new InstanceData[128];
+	private static readonly int[]          _InstanceTexIds      = new int[128];
 	
 	private static unsafe void Flush(GL gl) {
 		if (_Instances == 0) return;
 		
-		_LastTex.Bind(gl);
+		for (int i = 0; i < _UsedTextures; i++) {
+			Texture tex = _BoundTextures[i];
+			
+			tex.Bind(gl, TextureUnit.Texture0 + i);
+		}
 
 		_Shader.SetUniform(gl, "InstanceData", _InstanceData);
+		_Shader.SetUniform(gl, "InstanceTexIds", _InstanceTexIds);
 		
 		fixed (void* ptr = _Indicies)
 			gl.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedShort, ptr, _Instances);
@@ -138,8 +164,9 @@ public static class Renderer {
 		LastDrawAmount += _Instances;
 		LastInstanceAmount++;
 		
-		_Instances = 0;
+		_Instances    = 0;
+		_UsedTextures = 0;
 	}
 
-	private static Texture _LastTex;
+	// private static Texture _LastTex;
 }

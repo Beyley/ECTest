@@ -10,9 +10,11 @@ layout (location = 2) in vec2 VertexTextureCoordinate;
 // uniform float RadianAngle;
 out vec4 fs_in_col;
 out vec2 fs_in_tex;
+flat out int  fs_in_texid;
 
 uniform mat4 ProjectionMatrix;
 uniform vec2 InstanceData[128 * 6];
+uniform int InstanceTexIds[128];
 
 void main() {
 	//mat2 rotation = mat2(cos(RadianAngle),sin(RadianAngle),
@@ -32,6 +34,7 @@ void main() {
 	gl_Position = ProjectionMatrix * vec4(_VertexPosition, 0, 1);
 	fs_in_col = VertexColor * i_color;
 	fs_in_tex = (VertexTextureCoordinate * i_tex_mult) + i_tex_add;
+	fs_in_texid = InstanceTexIds[gl_InstanceID];
 }
 ";
 	public static string Fragment = @"#version 300 es
@@ -39,11 +42,30 @@ precision mediump float;
 
 in  vec4 fs_in_col;
 in  vec2 fs_in_tex;
+flat in int  fs_in_texid;
 out vec4 FragColor;
 
 uniform sampler2D tex;
+uniform sampler2D tex2;
+uniform sampler2D tex3;
+uniform sampler2D tex4;
 
 void main() {
-	FragColor = texture(tex, fs_in_tex) * fs_in_col;
+	sampler2D tex_to_use;
+
+	//This makes sure we have a default in the case of an invalid texture id getting to the shader
+	//This also fixes a compile warning
+	tex_to_use = tex;
+
+	if(fs_in_texid == 0)
+		tex_to_use = tex;
+	else if(fs_in_texid == 1)
+		tex_to_use = tex2;
+	else if(fs_in_texid == 2)
+		tex_to_use = tex3;
+	else if(fs_in_texid == 3)
+		tex_to_use = tex4;
+
+	FragColor = texture(tex_to_use, fs_in_tex) * fs_in_col;
 };";
 }
