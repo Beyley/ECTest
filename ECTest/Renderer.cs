@@ -20,22 +20,22 @@ public static class Renderer {
 		new() {
 			Position        = new(0, 0),
 			Color           = new(1, 1, 1, 1),
-			TexturePosition = new(0, 0)
+			TexturePosition = new(0, 1)
 		},
 		new() {
 			Position        = new(1, 0),
 			Color           = new(1, 1, 1, 1),
-			TexturePosition = new(1, 0)
+			TexturePosition = new(1, 1)
 		},
 		new() {
 			Position        = new(1, 1),
 			Color           = new(1, 1, 1, 1),
-			TexturePosition = new(1, 1)
+			TexturePosition = new(1, 0)
 		},
 		new() {
 			Position        = new(0, 1),
 			Color           = new(1, 1, 1, 1),
-			TexturePosition = new(0, 1)
+			TexturePosition = new(0, 0)
 		}
 	};
 	private static short[] _Indicies = {
@@ -104,7 +104,7 @@ public static class Renderer {
 
 
 	private static InstanceData _templateInstanceData;
-	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectMult, Color color) {
+	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectAdd, Vector2 textureRectMult, Color color) {
 		if (_LastTex != null && tex != _LastTex || _Instances >= _InstanceData.Length) {
 			Flush(gl);
 		}
@@ -113,6 +113,7 @@ public static class Renderer {
 		_templateInstanceData.Position        = postition;
 		_templateInstanceData.Size            = size;
 		_templateInstanceData.Color           = color;
+		_templateInstanceData.TextureRectAdd  = textureRectAdd;
 		_templateInstanceData.TextureRectMult = textureRectMult;
 		
 		_InstanceData[_Instances] = _templateInstanceData;
@@ -121,7 +122,7 @@ public static class Renderer {
 	}
 
 	private static          uint           _Instances           = 0;
-	public const            short          VECTORS_PER_INSTANCE = 5;
+	public const            short          VECTORS_PER_INSTANCE = 6;
 	private static readonly InstanceData[] _InstanceData        = new InstanceData[128];
 	
 	private static unsafe void Flush(GL gl) {

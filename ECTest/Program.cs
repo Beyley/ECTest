@@ -77,15 +77,16 @@ namespace ECTest {
 				Renderer.Clear(gl, new(0, 0, 0, 0));
 				CheckError(gl);
 				
-				for (int x = 0; x <= 1000; x += 40) {
-					for (int y = 0; y <= 740; y += 40) {
+				for (int x = 0; x <= 1000; x += 80) {
+					for (int y = 0; y <= 740; y += 80) {
 						Renderer.DrawTexture(
 							gl, 
 							_Tex, 
 							new(x, y), 
-							new(40f),
+							new(80f),
+							new(0f),
 							new(1f),
-							x % 80 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1)
+							x % 160 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1)
 						);
 					}
 				}
