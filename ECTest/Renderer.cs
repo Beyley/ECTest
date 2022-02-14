@@ -7,7 +7,9 @@ using Rectangle = System.Drawing.Rectangle;
 namespace ECTest; 
 
 public static class Renderer {
-	private static VertexBuffer _Buffer;
+	private static VertexBufferObject _VBO;
+	private static VertexArrayObject _VAO;
+
 	public static uint LastDrawAmount {
 		get;
 		private set;
@@ -48,6 +50,33 @@ public static class Renderer {
 
 	private static ShaderPair _Shader     = null;
 	private static bool       _NeedRebind = false;
+
+	public static unsafe void Initialize(GL gl) {
+		_VAO = new(gl);
+		
+		_VAO.Bind(gl);
+		
+		if (_VBO != null)
+			_VBO.Dispose(gl);
+			
+		_VBO = new(gl);
+		Program.CheckError(gl);
+				
+		_VBO.SetData<Vertex>(gl, _Vertices);
+		Program.CheckError(gl);
+			
+		_VBO.Bind(gl);
+			
+		gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)0);
+		gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)sizeof(Vector2));
+		gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)(sizeof(Vector2) + sizeof(Color)));
+		Program.CheckError(gl);
+		
+		gl.EnableVertexAttribArray(0);
+		gl.EnableVertexAttribArray(1);
+		gl.EnableVertexAttribArray(2);
+		Program.CheckError(gl);
+	}
 	
 	public static unsafe void Begin(GL gl, ShaderPair shader) {
 		if (_Shader != shader) {
@@ -59,31 +88,8 @@ public static class Renderer {
 		}
 		_Shader = shader;
 
-		if (_NeedRebind) {
-			if (_Buffer != null)
-				_Buffer.Dispose(gl);
-			
-			_Buffer = new(gl);
-			Program.CheckError(gl);
-				
-			_Buffer.SetData<Vertex>(gl, _Vertices);
-			Program.CheckError(gl);
-			
-			_Buffer.Bind(gl);
-			
-			gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)0);
-			gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)sizeof(Vector2));
-			gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, (uint)sizeof(Vertex), (void*)(sizeof(Vector2) + sizeof(Color)));
-			Program.CheckError(gl);
-		}
-
 		if(_NeedRebind)
 			shader.SetUniform(gl, "ProjectionMatrix", Program.ProjectionMatrix);
-		
-		gl.EnableVertexAttribArray(0);
-		gl.EnableVertexAttribArray(1);
-		gl.EnableVertexAttribArray(2);
-		Program.CheckError(gl);
 
 		LastDrawAmount     = 0;
 		LastInstanceAmount = 0;
@@ -97,9 +103,9 @@ public static class Renderer {
 	public static void End(GL gl) {
 		Flush(gl);
 		
-		gl.DisableVertexAttribArray(0);
-		gl.DisableVertexAttribArray(1);
-		gl.DisableVertexAttribArray(2);
+		// gl.DisableVertexAttribArray(0);
+		// gl.DisableVertexAttribArray(1);
+		// gl.DisableVertexAttribArray(2);
 		// CheckError(gl);
 	}
 
@@ -154,6 +160,8 @@ public static class Renderer {
 			
 			tex.Bind(gl, TextureUnit.Texture0 + i);
 		}
+		
+		_VAO.Bind(gl);
 
 		_Shader.SetUniform(gl, "InstanceData", _InstanceData);
 		_Shader.SetUniform(gl, "InstanceTexIds", _InstanceTexIds);

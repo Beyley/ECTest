@@ -3,10 +3,10 @@ using Silk.NET.OpenGLES;
 
 namespace ECTest; 
 
-public class VertexBuffer {
+public class VertexBufferObject {
 	public uint BufferID;
 
-	public VertexBuffer(GL gl) {
+	public VertexBufferObject(GL gl) {
 		this.BufferID = gl.GenBuffer();
 	}
 

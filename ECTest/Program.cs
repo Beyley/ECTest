@@ -58,6 +58,8 @@ namespace ECTest {
 				CheckError(gl);
 				
 				ProjectionMatrix = Matrix4x4.CreateOrthographicOffCenter(0, window.Size.X, 0, window.Size.Y, 1f, 0f);
+				
+				Renderer.Initialize(gl);
 			};
 
 			window.Update += delegate(double time) {
