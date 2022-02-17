@@ -18,4 +18,11 @@
         <None Update="images/*.qoi" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="InstancedFragment.glsl" />
+      <EmbeddedResource Include="InstancedFragment.glsl" />
+      <None Remove="InstancedVertex.glsl" />
+      <EmbeddedResource Include="InstancedVertex.glsl" />
+    </ItemGroup>
+
 </Project>

@@ -1,14 +1,17 @@
 using System.Numerics;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 using Silk.NET.OpenGLES;
+using Silk.NET.Vulkan;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace ECTest; 
 
 public static class Renderer {
-	private static VertexBufferObject _VBO;
-	private static VertexArrayObject _VAO;
+	private static VertexBufferObject  _VBO;
+	private static VertexArrayObject   _VAO;
+	private static UniformBufferObject _UBO;
 
 	public static uint LastDrawAmount {
 		get;
@@ -55,6 +58,8 @@ public static class Renderer {
 		_VAO = new(gl);
 		
 		_VAO.Bind(gl);
+
+		_UBO = new(gl, _InstanceDataBufferSize);
 		
 		if (_VBO != null)
 			_VBO.Dispose(gl);
@@ -76,6 +81,8 @@ public static class Renderer {
 		gl.EnableVertexAttribArray(1);
 		gl.EnableVertexAttribArray(2);
 		Program.CheckError(gl);
+		
+		_UBO.Bind(gl);
 	}
 	
 	public static unsafe void Begin(GL gl, ShaderPair shader) {
@@ -109,24 +116,64 @@ public static class Renderer {
 		// CheckError(gl);
 	}
 
+	private static Vector4 tempPositionSize;
+	private static Vector4 color;
 
-	private static InstanceData _templateInstanceData;
-	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectAdd, Vector2 textureRectMult, Color color) {
-		if (_Instances >= _InstanceData.Length || _UsedTextures == Texture.MAX_TEXTURE_UNITS) {
+	private static Vector4 tempTextureData;
+
+	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectAdd, Vector2 textureRectMult, Color color, float rotation = 0f) {
+		if (_Instances >= NUM_INSTANCES || _UsedTextures == Texture.MAX_TEXTURE_UNITS) {
 			Flush(gl);
 		}
 
-		_templateInstanceData.Position        = postition;
-		_templateInstanceData.Size            = size;
-		_templateInstanceData.Color           = color;
-		_templateInstanceData.TextureRectAdd  = textureRectAdd;
-		_templateInstanceData.TextureRectMult = textureRectMult;
-		
-		_InstanceData[_Instances] = _templateInstanceData;
+		// _templateInstanceData.Position        = postition;
+		// _templateInstanceData.Size            = size;
+		// _templateInstanceData.Color           = color;
+		// _templateInstanceData.TextureRectAdd  = textureRectAdd;
+		// _templateInstanceData.TextureRectMult = textureRectMult;
+		//
+		// _InstanceData[_Instances] = _templateInstanceData;
 
-		int texId = GetTextureId(tex);
-		_InstanceTexIds[_Instances] = texId;
+		tempPositionSize.X = postition.X;
+		tempPositionSize.Y = postition.Y;
+		tempPositionSize.Z = size.X;
+		tempPositionSize.W = size.Y;
 		
+		_InstancePositionSizes[_Instances] = tempPositionSize;
+
+		_InstanceColors[_Instances] = color;
+
+		tempTextureData.X = textureRectAdd.X;
+		tempTextureData.Y = textureRectAdd.Y;
+		tempTextureData.Z = textureRectMult.X;
+		tempTextureData.W = textureRectMult.Y;
+
+		_InstanceTexturePositionScales[_Instances] = tempTextureData;
+
+		int instanceOver4 = (int)Math.Floor(_Instances / 4f);
+
+		switch (_Instances % 4) {
+			case 0: {
+				_InstanceRotations[instanceOver4].X = rotation;
+				break;
+			}
+			case 1: {
+				_InstanceRotations[instanceOver4].Y = rotation;
+				break;
+			}
+			case 2: {
+				_InstanceRotations[instanceOver4].Z = rotation;
+				break;
+			}
+			case 3: {
+				_InstanceRotations[instanceOver4].W = rotation;
+				break;
+			}
+		}
+
+		int texId         = GetTextureId(tex);
+		_InstanceTexIds[_Instances] = texId;
+
 		_Instances++;
 	}
 
@@ -146,11 +193,20 @@ public static class Renderer {
 		
 		return _UsedTextures - 1;
 	}
+
+	public const short NUM_INSTANCES = 128;
 	
-	private static          uint           _Instances           = 0;
-	public const            short          VECTORS_PER_INSTANCE = 6;
-	private static readonly InstanceData[] _InstanceData        = new InstanceData[128];
-	private static readonly int[]          _InstanceTexIds      = new int[128];
+	private static          uint           _Instances             = 0;
+	public const            short          VECTORS_PER_INSTANCE   = 6;
+	private static readonly Vector4[] _InstancePositionSizes = new Vector4[NUM_INSTANCES];
+	//Colors are a vec4 anyway so this is just a normal array, one element per instance
+	private static readonly Color[]   _InstanceColors                = new Color[NUM_INSTANCES];
+	private static readonly Vector4[] _InstanceTexturePositionScales = new Vector4[NUM_INSTANCES];
+	private static readonly Vector4[] _InstanceRotations             = new Vector4[NUM_INSTANCES / 4];
+	//We pack 4 tex ids into a single Vector4D<int>
+	private static readonly int[] _InstanceTexIds = new int[NUM_INSTANCES];
+
+	private static readonly unsafe nuint _InstanceDataBufferSize = (nuint)(sizeof(Vector4) * _InstancePositionSizes.Length + sizeof(Color) * _InstanceColors.Length + sizeof(Vector4) * _InstanceTexturePositionScales.Length + sizeof(Vector4) * _InstanceRotations.Length + sizeof(int) * _InstanceTexIds.Length);
 	
 	private static unsafe void Flush(GL gl) {
 		if (_Instances == 0) return;
@@ -162,10 +218,26 @@ public static class Renderer {
 		}
 		
 		_VAO.Bind(gl);
-
-		_Shader.SetUniform(gl, "InstanceData", _InstanceData);
-		_Shader.SetUniform(gl, "InstanceTexIds", _InstanceTexIds);
+		Program.CheckError(gl);
 		
+		// _UBO.Bind(gl);
+		// Program.CheckError(gl);
+		
+		_UBO.SetDataSub<Vector4>(gl, _InstancePositionSizes, 0);
+		Program.CheckError(gl);
+		int offset = sizeof(Vector4) * _InstancePositionSizes.Length;
+		_UBO.SetDataSub<Color>(gl, _InstanceColors, offset);
+		Program.CheckError(gl);
+		offset += sizeof(Color) * _InstanceColors.Length;
+		_UBO.SetDataSub<Vector4>(gl, _InstanceTexturePositionScales, offset);
+		Program.CheckError(gl);
+		offset += sizeof(Vector4) * _InstanceTexturePositionScales.Length;
+		_UBO.SetDataSub<Vector4>(gl, _InstanceRotations, offset);
+		Program.CheckError(gl);
+		offset += sizeof(Vector4) * _InstanceRotations.Length;
+		_UBO.SetDataSub<int>(gl, _InstanceTexIds, offset);
+		Program.CheckError(gl);
+
 		fixed (void* ptr = _Indicies)
 			gl.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedShort, ptr, _Instances);
 
