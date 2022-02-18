@@ -122,7 +122,7 @@ public static class Renderer {
 	private static Vector4 tempTextureData;
 
 	public static void DrawTexture(GL gl, Texture tex, Vector2 postition, Vector2 size, Vector2 textureRectAdd, Vector2 textureRectMult, Color color, float rotation = 0f) {
-		if (_Instances >= NUM_INSTANCES || _UsedTextures == Texture.MAX_TEXTURE_UNITS) {
+		if (_Instances >= NUM_INSTANCES || _UsedTextures == Texture.MaxTextureUnits) {
 			Flush(gl);
 		}
 
@@ -177,7 +177,7 @@ public static class Renderer {
 		_Instances++;
 	}
 
-	private static readonly Texture[] _BoundTextures = new Texture[Texture.MAX_TEXTURE_UNITS];
+	private static readonly Texture[] _BoundTextures = new Texture[Texture.MaxTextureUnits];
 	private static          int       _UsedTextures  = 0;
 	
 	private static int GetTextureId(Texture tex) {

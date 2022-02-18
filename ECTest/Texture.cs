@@ -28,9 +28,9 @@ public class Texture {
 		return texture;
 	}
 
-	public const int MAX_TEXTURE_UNITS = 4;
+	public static int MaxTextureUnits = 4;
 	public void Bind(GL gl, TextureUnit texUnit = TextureUnit.Texture0) {
-		if (texUnit >= (TextureUnit)33984 + MAX_TEXTURE_UNITS) throw new NotSupportedException($"Only {MAX_TEXTURE_UNITS} are allowed!");
+		if (texUnit >= (TextureUnit)33984 + MaxTextureUnits) throw new NotSupportedException($"Only {MaxTextureUnits} texture units are allowed!");
 		
 		gl.ActiveTexture(texUnit);
 		gl.BindTexture(TextureTarget.Texture2D, this.TextureID);

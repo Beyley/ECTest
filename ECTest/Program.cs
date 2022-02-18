@@ -54,9 +54,6 @@ namespace ECTest {
 			});
 
 			window.Load += delegate {
-				Shaders.Vertex = LoadStringFromEmbedded("InstancedVertex.glsl");
-				Shaders.Fragment = LoadStringFromEmbedded("InstancedFragment.glsl");
-				
 				gl = window.CreateOpenGLES();
 				
 				gl.Enable(EnableCap.Blend);
@@ -65,15 +62,16 @@ namespace ECTest {
 				gl.Viewport(new Vector2D<int>(0, 0), window.Size);
 				CheckError(gl);
 
+				Shaders.GenerateShaders(gl);
 				mainShaderPair = new ShaderPair(gl, Shaders.Vertex, Shaders.Fragment);
 				CheckError(gl);
 				Console.WriteLine($"Shaders compiled! vtx:{mainShaderPair.Vertex} frg:{mainShaderPair.Fragment} prg: {mainShaderPair.Program}");
 
 				mainShaderPair.Use(gl);
-				mainShaderPair.BindUniformToTexUnit(gl, "tex_1", 0);
-				mainShaderPair.BindUniformToTexUnit(gl, "tex_2", 1);
-				mainShaderPair.BindUniformToTexUnit(gl, "tex_3", 2);
-				mainShaderPair.BindUniformToTexUnit(gl, "tex_4", 3);
+
+				for (int i = 0; i < Texture.MaxTextureUnits; i++) {
+					mainShaderPair.BindUniformToTexUnit(gl, $"tex_{i}", i);
+				}
 				
 				mainShaderPair.SetUniformBlockBinding(gl, "InstanceData", 0);
 
