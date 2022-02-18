@@ -115,19 +115,32 @@ namespace ECTest {
 				Renderer.Clear(gl, new(0, 0, 0, 0));
 				CheckError(gl);
 				
-				for (int x = 0; x <= 1000; x += 20) {
-					for (int y = 0; y <= 740; y += 20) {
-						Renderer.DrawTexture(
-							gl, 
-							x % 40 != 0 ? _Tex2 : _Tex1, 
-							new(x, y), 
-							new(20f),
-							new(0f),
-							new(1f),
-							x % 40 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1),
-							x % 40 != 0 ? 1f : 0.5f
-						);
-					}
+				// for (int x = 0; x <= 1000; x += 10) {
+				// 	for (int y = 0; y <= 740; y += 10) {
+				// 		Renderer.DrawTexture(
+				// 			gl, 
+				// 			x % 40 != 0 ? _Tex2 : _Tex1, 
+				// 			new(x, y), 
+				// 			new(20f),
+				// 			new(0f),
+				// 			new(1f),
+				// 			x % 40 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1),
+				// 			x % 40 != 0 ? 1f : 0.5f
+				// 		);
+				// 	}
+				// }
+
+				for (int x = 0; x < 2000000; x++) {
+					Renderer.DrawTexture(
+						gl, 
+						x % 40 != 0 ? _Tex2 : _Tex1, 
+						new(x % 1000, 10), 
+						new(20f),
+						new(0f),
+						new(1f),
+						x % 40 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1),
+						x % 40 != 0 ? 1f : 0.5f
+					);
 				}
 
 				CheckError(gl);

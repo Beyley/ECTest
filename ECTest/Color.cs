@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace ECTest; 
 
+[StructLayout(LayoutKind.Sequential)]
 public struct Color {
 	public float R;
 	public float G;
