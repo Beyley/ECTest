@@ -15,6 +15,10 @@ public class VertexArrayObject {
 		Program.CheckError(gl);
 	}
 
+	public static void Unbind(GL gl) {
+		gl.BindVertexArray(0);
+	}
+
 	public void Dispose(GL gl) {
 		gl.DeleteVertexArray(this.VaoId);
 		Program.CheckError(gl);

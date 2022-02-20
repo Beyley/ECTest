@@ -14,6 +14,10 @@ public class VertexBufferObject {
 		gl.BindBuffer(GLEnum.ArrayBuffer, this.BufferID);
 	}
 
+	public static void Unbind(GL gl) {
+		gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+	}
+
 	public void SetData<T>(GL gl, ReadOnlySpan<T> data) where T : unmanaged {
 		this.Bind(gl);
 		gl.BufferData(GLEnum.ArrayBuffer, data, GLEnum.StaticDraw);

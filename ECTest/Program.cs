@@ -68,12 +68,15 @@ namespace ECTest {
 				Console.WriteLine($"Shaders compiled! vtx:{mainShaderPair.Vertex} frg:{mainShaderPair.Fragment} prg: {mainShaderPair.Program}");
 
 				mainShaderPair.Use(gl);
+				CheckError(gl);
 
 				for (int i = 0; i < Texture.MaxTextureUnits; i++) {
 					mainShaderPair.BindUniformToTexUnit(gl, $"tex_{i}", i);
 				}
+				CheckError(gl);
 				
-				mainShaderPair.SetUniformBlockBinding(gl, "InstanceData", 0);
+				// mainShaderPair.SetUniformBlockBinding(gl, "InstanceData", 0);
+				// CheckError(gl);
 
 				_Tex1 = Texture.LoadQoi(gl, "images/test.qoi");
 				_Tex2 = Texture.LoadQoi(gl, "images/test2.qoi");
@@ -99,7 +102,11 @@ namespace ECTest {
 			// Vector2[] texturePositions = { new(0, 1f), new(1, 1), new(1, 0), new(0, 0) };
 			// Vector4   color     = new(255, 255, 255, 255);
 
-			double a = 0;
+			Vector2 size    = new(20);
+			Color   color   = new(1,1,1,1);
+			Vector2 texpos  = new(0);
+			Vector2 texsize = new(1);
+			double  a       = 0;
 			window.Render += delegate(double time) {
 				if (a > 1) {
 					Console.WriteLine(1d / time);
@@ -130,15 +137,16 @@ namespace ECTest {
 				// 	}
 				// }
 
-				for (int x = 0; x < 2000000; x++) {
+				
+				for (int x = 0; x < 7500; x++) {
 					Renderer.DrawTexture(
-						gl, 
-						x % 40 != 0 ? _Tex2 : _Tex1, 
-						new(x % 1000, 10), 
-						new(20f),
-						new(0f),
-						new(1f),
-						x % 40 != 0 ? new(1, 0, 1, 1) : new(0, 1, 1, 1),
+						gl,
+						x % 40 != 0 ? _Tex2 : _Tex1,
+						new(x % 1000, 10),
+						size,
+						texpos,
+						texsize,
+						color,
 						x % 40 != 0 ? 1f : 0.5f
 					);
 				}
@@ -159,7 +167,13 @@ namespace ECTest {
 		}
 		
 		private static void Callback(GLEnum source, GLEnum type, int id, GLEnum severity, int length, nint message, nint userparam) {
-			Console.WriteLine(SilkMarshal.PtrToString(message));
+			if (severity == GLEnum.DebugSeverityNotification) return;
+
+			string messageStr = SilkMarshal.PtrToString(message) ?? "Unknown errror!";
+			
+			if(messageStr == "Program/shader state performance warning: Vertex shader in program 3 is being recompiled based on GL state.") return;
+			
+			Console.WriteLine(messageStr);
 		}
 	}
 }
