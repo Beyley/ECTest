@@ -120,7 +120,7 @@ public static class Renderer {
 		gl.VertexAttribPointer(8, 1, VertexAttribPointerType.Int, false, (uint)sizeof(InstanceData), (void*)ptrPos);
 		gl.VertexAttribDivisor(8, 1);
 		ptrPos += sizeof(int);
-		
+
 		gl.EnableVertexAttribArray(2);
 		gl.EnableVertexAttribArray(3);
 		gl.EnableVertexAttribArray(4);
